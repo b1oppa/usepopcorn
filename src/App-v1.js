@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const tempMovieData = [
   {
@@ -50,25 +50,9 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
-const KEY = process.env.REACT_APP_OMDB_API_KEY;
-
 export default function App() {
-  const [movies, setMovies] = useState([]);
+  const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
-  const [isLoading, setIsLoading] = useState(true);
-  const query = "batman";
-
-  useEffect(function () {
-    async function fetchMovies() {
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
-    }
-    fetchMovies();
-  }, []);
   return (
     <>
       <NavBar>
@@ -79,7 +63,7 @@ export default function App() {
 
       <Main>
         <Box>
-          <MoviesList isLoading={isLoading} movies={movies} />
+          <MoviesList movies={movies} />
         </Box>
         <Box>
           <WatchedSummary watched={watched} />
@@ -165,10 +149,8 @@ function WatchedBox() {
 }
   */
 
-function MoviesList({ isLoading, movies }) {
-  return isLoading ? (
-    <Loading />
-  ) : (
+function MoviesList({ movies }) {
+  return (
     <ul className="list">
       {movies?.map((movie) => (
         <Movie movie={movie} key={movie.imdbID} />
@@ -190,10 +172,6 @@ function Movie({ movie }) {
       </div>
     </li>
   );
-}
-
-function Loading() {
-  return <p>Loading...</p>;
 }
 
 function WatchedSummary({ watched }) {
