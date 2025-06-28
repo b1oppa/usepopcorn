@@ -55,17 +55,34 @@ const KEY = process.env.REACT_APP_OMDB_API_KEY;
 export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
-  const [isLoading, setIsLoading] = useState(true);
-  const query = "batman";
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const query = "asdsadasd";
 
   useEffect(function () {
     async function fetchMovies() {
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        );
+
+        if (!res.ok) {
+          throw new Error("Error while fetching movies");
+        }
+
+        const data = await res.json();
+        if (data.Response === "False") {
+          throw new Error("Movie not found");
+        }
+
+        setMovies(data.Search);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchMovies();
   }, []);
@@ -79,7 +96,9 @@ export default function App() {
 
       <Main>
         <Box>
-          <MoviesList isLoading={isLoading} movies={movies} />
+          {isLoading && <Loading />}
+          {!isLoading && !error && <MoviesList movies={movies} />}
+          {error && <ErrorMessage message={error} />}
         </Box>
         <Box>
           <WatchedSummary watched={watched} />
@@ -88,6 +107,14 @@ export default function App() {
       </Main>
     </>
   );
+}
+
+function ErrorMessage({ message }) {
+  return <p>There was an error : {message}</p>;
+}
+
+function Loading() {
+  return <p>Loading...</p>;
 }
 
 function NavBar({ children }) {
@@ -120,7 +147,7 @@ function Search() {
 function NumResults({ movies }) {
   return (
     <p className="num-results">
-      Found <strong>{movies.length}</strong> results
+      Found <strong>{movies?.length ? movies.length : 0}</strong> results
     </p>
   );
 }
@@ -165,10 +192,8 @@ function WatchedBox() {
 }
   */
 
-function MoviesList({ isLoading, movies }) {
-  return isLoading ? (
-    <Loading />
-  ) : (
+function MoviesList({ movies }) {
+  return (
     <ul className="list">
       {movies?.map((movie) => (
         <Movie movie={movie} key={movie.imdbID} />
@@ -190,10 +215,6 @@ function Movie({ movie }) {
       </div>
     </li>
   );
-}
-
-function Loading() {
-  return <p>Loading...</p>;
 }
 
 function WatchedSummary({ watched }) {
